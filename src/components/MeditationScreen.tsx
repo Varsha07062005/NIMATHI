@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { Play, Pause, RotateCcw, Music, Clock } from "lucide-react";
+import { Play, Pause, RotateCcw, Music, Clock, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Slider } from "./ui/slider";
 import { Progress } from "./ui/progress";
 import { Card, CardContent } from "./ui/card";
+
+interface MeditationScreenProps {
+  onBack: () => void; // parent-controlled back
+}
 
 // Tracks (make sure these files exist in /public/audio/)
 const tracks = [
@@ -13,7 +17,7 @@ const tracks = [
   { id: 3, name: "Deep Focus", url: "/audio/focus1.mp3" },
 ];
 
-export function MeditationScreen() {
+export function MeditationScreen({ onBack }: MeditationScreenProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(5 * 60); // default 5 minutes
   const [currentTime, setCurrentTime] = useState(0);
@@ -26,9 +30,7 @@ export function MeditationScreen() {
 
   // Format seconds into mm:ss
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, "0");
+    const m = Math.floor(sec / 60).toString().padStart(2, "0");
     const s = (sec % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -66,21 +68,17 @@ export function MeditationScreen() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    if (audioRef.current) audioRef.current.pause();
   };
 
   // Reset meditation
   const resetMeditation = () => {
     stopMeditation();
     setCurrentTime(0);
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-    }
+    if (audioRef.current) audioRef.current.currentTime = 0;
   };
 
-  // Completed meditation
+  // Meditation completed
   const completeMeditation = () => {
     alert("Meditation Completed! 🌿");
   };
@@ -89,9 +87,7 @@ export function MeditationScreen() {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.src = selectedTrack?.url || "";
-      if (isPlaying) {
-        audioRef.current.play();
-      }
+      if (isPlaying) audioRef.current.play();
     }
     setCurrentTime(0); // reset timer when track changes
   }, [selectedTrack]);
@@ -105,20 +101,25 @@ export function MeditationScreen() {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white flex flex-col items-center justify-center p-6"
+      className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white flex flex-col items-center p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
+      {/* Sticky Header with Back Button */}
+      <div className="w-full max-w-lg mb-4 flex items-center sticky top-0 bg-black/30 backdrop-blur-lg z-10 p-3 rounded-xl">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="flex items-center space-x-2"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span>Back</span>
+        </Button>
+        <h1 className="text-xl font-bold ml-4">Guided Meditation</h1>
+      </div>
+
       <Card className="w-full max-w-lg bg-black/30 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20">
         <CardContent className="p-6 flex flex-col items-center space-y-6">
-          <motion.h1
-            className="text-3xl font-bold tracking-wide"
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-          >
-            Guided Meditation
-          </motion.h1>
-
           {/* Track Selection */}
           <div className="w-full">
             <label className="block mb-2">Select Track:</label>
@@ -157,9 +158,7 @@ export function MeditationScreen() {
               value={volume}
               onValueChange={(val) => {
                 setVolume(val);
-                if (audioRef.current) {
-                  audioRef.current.volume = val[0] / 100;
-                }
+                if (audioRef.current) audioRef.current.volume = val[0] / 100;
               }}
               max={100}
               min={0}
